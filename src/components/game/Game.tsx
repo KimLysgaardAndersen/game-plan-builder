@@ -33,7 +33,7 @@ export function Game() {
   const [step, setStep] = useState<Step>("welcome");
   const [level, setLevel] = useState<Level>(LEVELS[0]);
   const [collector, setCollector] = useState<CollectorAvatar>(COLLECTORS[0]);
-  const [deck, setDeck] = useState<ActionCard[]>(CREDITOR_CARDS.slice(0, 4));
+  const [deck, setDeck] = useState<ActionCard[]>(CREDITOR_CARDS.slice(0, 6));
   const [result, setResult] = useState<ResultData | null>(null);
   const [highestUnlocked, setHighestUnlocked] = useState(1);
   const [starsByLevel, setStarsByLevel] = useState<Record<string, number>>({});
