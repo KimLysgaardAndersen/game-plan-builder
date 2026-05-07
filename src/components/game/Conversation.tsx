@@ -1,29 +1,29 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Target } from "lucide-react";
 import { CardIcon } from "./CardIcon";
 import { replyAsDebtor } from "@/lib/debtor.functions";
-import type { ActionCard, CollectorAvatar, DebtorProfile } from "@/lib/game-data";
+import type { ActionCard, CollectorAvatar, Level } from "@/lib/game-data";
+import { evaluateLevel, type PlayContext } from "@/lib/scoring";
 import type { ResultData } from "./Game";
 
-type ChatMsg = { role: "collector" | "debtor"; text: string };
-
-const MAX_ROUNDS = 6;
+export type ChatMsg = { role: "collector" | "debtor"; text: string };
 
 export function Conversation({
   collector,
-  debtor,
+  level,
   deck,
   onFinish,
   onBack,
 }: {
   collector: CollectorAvatar;
-  debtor: DebtorProfile;
+  level: Level;
   deck: ActionCard[];
   onFinish: (r: ResultData) => void;
   onBack: () => void;
 }) {
+  const debtor = level.debtor;
   const replyFn = useServerFn(replyAsDebtor);
   const [messages, setMessages] = useState<ChatMsg[]>([
     { role: "debtor", text: debtor.initialLine },
@@ -32,11 +32,35 @@ export function Conversation({
   const [pressure, setPressure] = useState(0);
   const [busy, setBusy] = useState(false);
   const [usedCards, setUsedCards] = useState<string[]>([]);
+  const [agreement, setAgreement] = useState({ monthly: 0, lump: 0 });
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
+
+  function finishWith(verdict: "agreed" | "refused" | "timeout", monthly: number, lump: number, finalUsed: string[], finalPressure: number) {
+    const ctx: PlayContext = {
+      agreed: verdict === "agreed",
+      monthlyAmount: monthly,
+      lumpSum: lump,
+      rounds: round,
+      pressureUsed: finalPressure,
+      usedCardIds: finalUsed,
+      collectorId: collector.id,
+    };
+    const evald = evaluateLevel(level, ctx);
+    onFinish({
+      outcome: evald.outcome,
+      stars: evald.stars,
+      rounds: round,
+      collectorName: collector.name,
+      level,
+      ctx,
+      evaluations: evald.results.map((r) => ({ id: r.objective.id, label: r.objective.label, bonus: !!r.objective.bonus, passed: r.passed })),
+      transcript: messages,
+    });
+  }
 
   async function playCard(card: ActionCard) {
     if (busy) return;
@@ -44,7 +68,8 @@ export function Conversation({
     const collectorLine = card.prompt;
     const newMessages: ChatMsg[] = [...messages, { role: "collector", text: collectorLine }];
     setMessages(newMessages);
-    setUsedCards((u) => [...u, card.id]);
+    const newUsed = [...usedCards, card.id];
+    setUsedCards(newUsed);
     const newPressure = pressure + card.cost;
     setPressure(newPressure);
 
@@ -52,31 +77,33 @@ export function Conversation({
       role: m.role === "collector" ? ("user" as const) : ("assistant" as const),
       content: m.text,
     }));
-    const systemPrompt = `${debtor.systemPrompt} The collector you are speaking with has this style: ${collector.systemTrait}.`;
+    const systemPrompt = `${debtor.systemPrompt} The collector has this style: ${collector.systemTrait}.`;
 
     try {
-      const { reply, verdict } = await replyFn({ data: { systemPrompt, messages: aiMessages } });
+      const { reply, verdict, monthlyAmount, lumpSum } = await replyFn({ data: { systemPrompt, messages: aiMessages } });
       setMessages((m) => [...m, { role: "debtor", text: reply || "..." }]);
+
+      const newAgreement = {
+        monthly: monthlyAmount || agreement.monthly,
+        lump: lumpSum || agreement.lump,
+      };
+      setAgreement(newAgreement);
 
       if (verdict === "agreed") {
         setBusy(false);
-        onFinish({ outcome: "win", rounds: round, collectorName: collector.name });
+        finishWith("agreed", newAgreement.monthly, newAgreement.lump, newUsed, newPressure);
         return;
       }
       if (verdict === "refused") {
         setBusy(false);
-        onFinish({ outcome: "lose", rounds: round, collectorName: collector.name });
+        finishWith("refused", newAgreement.monthly, newAgreement.lump, newUsed, newPressure);
         return;
       }
 
       const nextRound = round + 1;
-      if (nextRound > MAX_ROUNDS) {
+      if (nextRound > level.maxRounds) {
         setBusy(false);
-        onFinish({
-          outcome: newPressure >= 6 ? "partial" : "lose",
-          rounds: round,
-          collectorName: collector.name,
-        });
+        finishWith("timeout", newAgreement.monthly, newAgreement.lump, newUsed, newPressure);
         return;
       }
       setRound(nextRound);
@@ -94,7 +121,7 @@ export function Conversation({
         className="flex min-h-[70vh] flex-col rounded-2xl border border-border"
         style={{ background: "var(--gradient-card)" }}
       >
-        <header className="flex items-center justify-between border-b border-border p-4">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border p-4">
           <div className="flex items-center gap-3">
             <img
               src={debtor.image}
@@ -109,19 +136,63 @@ export function Conversation({
                 {debtor.name}, {debtor.age}
               </p>
               <p className="text-xs text-muted-foreground">
-                Sag #{debtor.caseId} · {debtor.amount.toLocaleString("da-DK")} kr
+                Bane {level.number} · Sag #{debtor.caseId} · {debtor.amount.toLocaleString("da-DK")} kr
               </p>
             </div>
           </div>
           <div className="flex items-center gap-4 text-xs">
-            <Stat label="Runde" value={`${round}/${MAX_ROUNDS}`} />
-            <Stat label="Pres" value={String(pressure)} accent />
+            <Stat label="Runde" value={`${round}/${level.maxRounds}`} />
+            <Stat label="Pres" value={`${pressure}/${level.pressureCap}`} accent={pressure > level.pressureCap} />
           </div>
         </header>
 
+        {/* Live objective tracker */}
+        <div className="border-b border-border bg-background/40 px-4 py-3">
+          <div className="mb-2 flex items-center gap-2 text-[color:var(--gold)]">
+            <Target className="h-3.5 w-3.5" />
+            <p className="text-[10px] font-semibold uppercase tracking-widest">Mål</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {level.objectives.map((o) => {
+              const ctx: PlayContext = {
+                agreed: false,
+                monthlyAmount: agreement.monthly,
+                lumpSum: agreement.lump,
+                rounds: round,
+                pressureUsed: pressure,
+                usedCardIds: usedCards,
+                collectorId: collector.id,
+              };
+              // Live: ignore "agreed" requirement for status tracking on non-agreement objectives
+              const livePassed =
+                o.kind === "agreement"
+                  ? agreement.monthly > 0 || agreement.lump > 0
+                  : (() => {
+                      // run eval as if agreed=true to show the metric status
+                      return evalLive(o, { ...ctx, agreed: true });
+                    })();
+              return (
+                <span
+                  key={o.id}
+                  className={`rounded-full border px-2.5 py-1 text-[11px] ${
+                    livePassed
+                      ? "border-[color:var(--success)]/40 bg-[color:var(--success)]/10 text-[color:var(--success)]"
+                      : o.bonus
+                      ? "border-border text-muted-foreground"
+                      : "border-[color:var(--creditor)]/30 text-foreground"
+                  }`}
+                >
+                  {o.bonus ? "★ " : "● "}
+                  {o.label}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+
         <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-6">
           {messages.map((m, i) => (
-            <Bubble key={i} msg={m} collector={collector} debtor={debtor} />
+            <Bubble key={i} msg={m} collector={collector} debtorImage={debtor.image} debtorName={debtor.name} />
           ))}
           {busy && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -157,8 +228,13 @@ export function Conversation({
                   }`}
                   style={{ background: "var(--gradient-card)" }}
                 >
-                  <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-md bg-[color:var(--creditor)]/15 text-[color:var(--creditor)]">
-                    <CardIcon name={card.icon} className="h-4 w-4" />
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[color:var(--creditor)]/15 text-[color:var(--creditor)]">
+                      <CardIcon name={card.icon} className="h-4 w-4" />
+                    </div>
+                    <span className="text-[10px] font-semibold text-[color:var(--gold)]">
+                      −{card.cost}
+                    </span>
                   </div>
                   <p className="text-sm font-semibold leading-tight">{card.title}</p>
                   <p className="mt-1 line-clamp-2 text-[10px] text-muted-foreground">
@@ -178,11 +254,28 @@ export function Conversation({
   );
 }
 
+function evalLive(o: import("@/lib/game-data").LevelObjective, ctx: PlayContext): boolean {
+  switch (o.kind) {
+    case "agreement":
+      return ctx.agreed;
+    case "min_monthly":
+      return ctx.monthlyAmount >= (o.target ?? 0) || ctx.lumpSum >= (o.target ?? 0);
+    case "max_rounds":
+      return ctx.rounds <= (o.target ?? 999);
+    case "max_pressure":
+      return ctx.pressureUsed <= (o.target ?? 999);
+    case "no_escalation":
+      return !ctx.usedCardIds.some((id) => ["inkasso", "foged"].includes(id));
+    case "tone":
+      return ctx.collectorId === o.toneRequired;
+  }
+}
+
 function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
     <div className="text-right">
       <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className={`font-display text-base ${accent ? "text-[color:var(--gold)]" : ""}`}>{value}</p>
+      <p className={`font-display text-base ${accent ? "text-[color:var(--destructive)]" : "text-[color:var(--gold)]"}`}>{value}</p>
     </div>
   );
 }
@@ -190,23 +283,19 @@ function Stat({ label, value, accent }: { label: string; value: string; accent?:
 function Bubble({
   msg,
   collector,
-  debtor,
+  debtorImage,
+  debtorName,
 }: {
   msg: ChatMsg;
   collector: CollectorAvatar;
-  debtor: DebtorProfile;
+  debtorImage: string;
+  debtorName: string;
 }) {
   const isCollector = msg.role === "collector";
   return (
     <div className={`flex items-end gap-3 ${isCollector ? "justify-end" : "justify-start"}`}>
       {!isCollector && (
-        <img
-          src={debtor.image}
-          alt=""
-          width={32}
-          height={32}
-          className="h-8 w-8 rounded-full object-cover"
-        />
+        <img src={debtorImage} alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover" />
       )}
       <div
         className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
@@ -216,18 +305,12 @@ function Bubble({
         }`}
       >
         <p className="mb-1 text-[10px] uppercase tracking-widest opacity-70">
-          {isCollector ? collector.name : debtor.name}
+          {isCollector ? collector.name : debtorName}
         </p>
         {msg.text}
       </div>
       {isCollector && (
-        <img
-          src={collector.image}
-          alt=""
-          width={32}
-          height={32}
-          className="h-8 w-8 rounded-full object-cover"
-        />
+        <img src={collector.image} alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover" />
       )}
     </div>
   );
