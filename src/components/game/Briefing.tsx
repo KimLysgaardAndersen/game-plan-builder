@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Target, Star, FileText } from "lucide-react";
 import type { Level } from "@/lib/game-data";
+import { TemperamentPanel } from "./TemperamentBadge";
 
 export function Briefing({
   level,
@@ -47,6 +48,10 @@ export function Briefing({
             <div className="mt-6 flex items-start gap-3 rounded-xl border border-border bg-background/40 p-4">
               <FileText className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
               <p className="text-sm leading-relaxed">{level.brief}</p>
+            </div>
+
+            <div className="mt-4">
+              <TemperamentPanel debtor={level.debtor} />
             </div>
           </div>
         </div>
