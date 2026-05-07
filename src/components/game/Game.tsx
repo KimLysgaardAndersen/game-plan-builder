@@ -46,7 +46,7 @@ export function Game() {
           collector={collector}
           debtor={TUTORIAL_DEBTOR}
           deck={deck}
-          onFinish={(r) => {
+          onFinish={(r: ResultData) => {
             setResult(r);
             setStep("result");
           }}
