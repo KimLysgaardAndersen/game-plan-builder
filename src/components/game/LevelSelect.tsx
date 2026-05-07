@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Lock, Star } from "lucide-react";
 import { LEVELS, type Level } from "@/lib/game-data";
+import { TemperamentBadge } from "./TemperamentBadge";
 
 export function LevelSelect({
   highestUnlocked,
@@ -54,6 +55,9 @@ export function LevelSelect({
                   <p className="mt-1 text-xs text-muted-foreground">
                     {lvl.debtor.name}, {lvl.debtor.age} · {lvl.debtor.amount.toLocaleString("da-DK")} kr
                   </p>
+                  <div className="mt-2">
+                    <TemperamentBadge debtor={lvl.debtor} />
+                  </div>
                 </div>
                 {locked && <Lock className="h-4 w-4 text-muted-foreground" />}
               </div>
