@@ -123,7 +123,7 @@ export function Conversation({
       role: m.role === "collector" ? ("user" as const) : ("assistant" as const),
       content: m.text,
     }));
-    const systemPrompt = `${debtor.systemPrompt} The collector has this style: ${collector.systemTrait}.`;
+    const systemPrompt = `${debtor.systemPrompt}\n\n${debtor.temperament.cue}\n\nThe collector has this style: ${collector.systemTrait}.`;
 
     try {
       const { reply, verdict, monthlyAmount, lumpSum, proposedMonthly, proposedLump } = await replyFn({ data: { systemPrompt, messages: aiMessages } });
