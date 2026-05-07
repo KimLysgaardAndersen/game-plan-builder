@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Target, Flag, Handshake } from "lucide-react";
+import { ArrowLeft, Target, Flag, Handshake, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { CardIcon } from "./CardIcon";
 import { replyAsDebtor } from "@/lib/debtor.functions";
@@ -34,6 +34,7 @@ export function Conversation({
   const [busy, setBusy] = useState(false);
   const [usedCards, setUsedCards] = useState<string[]>([]);
   const [agreement, setAgreement] = useState({ monthly: 0, lump: 0 });
+  const [debtorOffer, setDebtorOffer] = useState<{ monthly: number; lump: number }>({ monthly: 0, lump: 0 });
   const [offerOpen, setOfferOpen] = useState(false);
   const [offerType, setOfferType] = useState<"monthly" | "lump">("monthly");
   const [offerAmount, setOfferAmount] = useState<string>("");
@@ -86,7 +87,7 @@ export function Conversation({
     const systemPrompt = `${debtor.systemPrompt} The collector has this style: ${collector.systemTrait}.`;
 
     try {
-      const { reply, verdict, monthlyAmount, lumpSum } = await replyFn({ data: { systemPrompt, messages: aiMessages } });
+      const { reply, verdict, monthlyAmount, lumpSum, proposedMonthly, proposedLump } = await replyFn({ data: { systemPrompt, messages: aiMessages } });
       setMessages((m) => [...m, { role: "debtor", text: reply || "..." }]);
 
       const newAgreement = {
@@ -94,6 +95,9 @@ export function Conversation({
         lump: lumpSum || agreement.lump,
       };
       setAgreement(newAgreement);
+      if (proposedMonthly || proposedLump) {
+        setDebtorOffer({ monthly: proposedMonthly || 0, lump: proposedLump || 0 });
+      }
 
       if (verdict === "agreed") {
         setBusy(false);
