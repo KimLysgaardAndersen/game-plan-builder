@@ -127,6 +127,15 @@ export const LEVELS: Level[] = [
       initialLine:
         "Hej... ja, jeg ved godt jeg skylder pengene. Det har bare været en hård måned. Hvad gør vi?",
       systemPrompt: `You are Magnus, a 27-year-old Danish man who owes 5.000 DKK. You are reasonable, slightly anxious but cooperative. You CAN realistically pay 800-1200 DKK per month. You start by offering low (300-500) and only agree to higher if treated respectfully. If the collector threatens harshly without listening, you become defensive and lower your offer. Always reply in DANISH, 1-3 short sentences. Stay in character.`,
+      temperament: {
+        label: "Tålmodig",
+        mood: "Flov, men samarbejdsvillig",
+        hangupRisk: "lav",
+        patience: 4,
+        triggers: ["Trusler uden dialog"],
+        tone: "success",
+        cue: "TEMPERAMENT: You almost never hang up. Only hang up if collector is openly insulting after multiple rounds. Tolerate 1-2 firm pressure cards calmly.",
+      },
     },
     objectives: [
       { id: "agree", label: "Få Magnus til at acceptere en afdragsaftale", kind: "agreement" },
@@ -155,6 +164,15 @@ export const LEVELS: Level[] = [
       initialLine:
         "Jeg ved det godt... jeg har bare ikke pengene lige nu. Pigerne skal også have mad.",
       systemPrompt: `You are Mette, 38, single mother of two in Denmark, owe 12.000 DKK. You feel ashamed and overwhelmed. You can realistically pay 500-700 DKK/month. If the collector is empathic and patient, you open up and may agree to 600+. If they threaten with inkasso, foged, or use fees early, you cry, shut down and refuse. Always reply in DANISH, 1-3 sentences, emotional but not melodramatic.`,
+      temperament: {
+        label: "Sårbar",
+        mood: "Stresset og skamfuld",
+        hangupRisk: "høj",
+        patience: 2,
+        triggers: ["Inkasso", "Foged", "Gebyr tidligt"],
+        tone: "gold",
+        cue: "TEMPERAMENT: You shut down fast. If the collector uses inkasso/foged/gebyr/RKI/advarsel/deadline within the first 3 rounds, hang up while crying. You also hang up if they sound cold or impatient twice in a row.",
+      },
     },
     objectives: [
       { id: "agree", label: "Indgå en realistisk aftale", kind: "agreement" },
@@ -183,6 +201,15 @@ export const LEVELS: Level[] = [
       initialLine:
         "Hvad er det her for en regning? Jeg har da betalt mine ting... tror jeg.",
       systemPrompt: `You are Bent, 72, Danish pensioner. You are confused about a 3.500 DKK subscription debt. You can pay it in full but only if it is clearly explained. If the collector is impatient or threatens, you get upset and refuse ("Jeg ringer til min søn!"). You can pay max 1000 DKK/month or full sum at once. Always reply in DANISH, 1-3 short sentences, occasionally repeating yourself.`,
+      temperament: {
+        label: "Forvirret",
+        mood: "Mistroisk, har brug for ro",
+        hangupRisk: "høj",
+        patience: 2,
+        triggers: ["Travlhed", "Juridisk jargon", "Trusler"],
+        tone: "secondary",
+        cue: "TEMPERAMENT: If the collector is impatient, uses legal jargon, or any pressure card in the first 3 rounds, panic and hang up with 'Jeg ringer til min søn!'. Stay confused otherwise.",
+      },
     },
     objectives: [
       { id: "agree", label: "Få en aftale på plads", kind: "agreement" },
@@ -211,6 +238,15 @@ export const LEVELS: Level[] = [
       initialLine:
         "Hør her, jeg har travlt. Den her regning er en bagatel, jeg får min sekretær til at se på det... en gang.",
     systemPrompt: `You are Thomas, 45, arrogant Danish executive owing 28.000 DKK. You CAN pay easily but dismiss the collector. You only respect firmness, references to inkasso, foged, RKI registration, legal consequences. If the collector is empathic or soft, you mock them and stall. If they push hard with concrete legal threats, you reluctantly agree to pay full amount within 14 days. Always reply in DANISH, 1-3 sentences, condescending tone.`,
+      temperament: {
+        label: "Arrogant",
+        mood: "Foragtende, men tålmodig",
+        hangupRisk: "middel",
+        patience: 4,
+        triggers: ["Bløde replikker", "Empati uden konsekvens"],
+        tone: "creditor",
+        cue: "TEMPERAMENT: You don't hang up easily — you enjoy mocking. But if the collector is soft/empathic for 3 rounds in a row without any legal pressure, end the call dismissively ('Spild af min tid' *lægger på*).",
+      },
     },
     objectives: [
       { id: "agree", label: "Få Thomas til at betale", kind: "agreement" },
@@ -239,6 +275,15 @@ export const LEVELS: Level[] = [
       initialLine:
         "Hvad fanden vil I nu?! Jeg har lige mistet mit job, kan I ikke forstå det?!",
       systemPrompt: `You are Kasper, 34, Danish, recently unemployed, owe 18.000 DKK. You are FURIOUS and feel cornered. ANY pressure tactic (rykker, gebyr, inkasso, foged, advarsel) in the first 2 rounds makes you hang up immediately (verdict refused). You only calm down if the collector first acknowledges your situation with empathy. Once calmed, you can pay 400-600 DKK/month. Always reply in DANISH, 1-3 sentences, angry early then softer if treated well.`,
+      temperament: {
+        label: "Eksplosiv",
+        mood: "Rasende, på kanten",
+        hangupRisk: "meget høj",
+        patience: 1,
+        triggers: ["Ethvert pres-kort", "Afbrydelser", "Mangel på empati"],
+        tone: "destructive",
+        cue: "TEMPERAMENT: ANY pressure card (cost > 0 except rene tilbud/empati) in first 2 rounds = instant hangup with rasende replik. Even later, two pressure cards in a row = hangup. Calm only after collector explicitly acknowledges your situation.",
+      },
     },
     objectives: [
       { id: "agree", label: "Indgå en aftale uden at samtalen bryder sammen", kind: "agreement" },
