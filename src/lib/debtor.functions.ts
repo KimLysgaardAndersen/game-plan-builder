@@ -21,6 +21,8 @@ export const replyAsDebtor = createServerFn({ method: "POST" })
         verdict: "continue" as const,
         monthlyAmount: 0,
         lumpSum: 0,
+        proposedMonthly: 0,
+        proposedLump: 0,
       };
     }
 
@@ -50,7 +52,7 @@ export const replyAsDebtor = createServerFn({ method: "POST" })
     if (!res.ok) {
       const text = await res.text();
       console.error("Lovable AI error", res.status, text);
-      return { reply: "(Forbindelsesfejl til AI)", verdict: "continue" as const, monthlyAmount: 0, lumpSum: 0 };
+      return { reply: "(Forbindelsesfejl til AI)", verdict: "continue" as const, monthlyAmount: 0, lumpSum: 0, proposedMonthly: 0, proposedLump: 0 };
     }
     const json: any = await res.json();
     const raw = json?.choices?.[0]?.message?.content ?? "{}";
