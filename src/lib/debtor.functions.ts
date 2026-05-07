@@ -108,3 +108,85 @@ export const coachDebrief = createServerFn({ method: "POST" })
     const json: any = await res.json();
     return { feedback: String(json?.choices?.[0]?.message?.content ?? "").trim() };
   });
+
+// ============= Dynamic adaptive cards =============
+
+const DynamicCardsSchema = z.object({
+  transcript: z
+    .array(z.object({ role: z.enum(["collector", "debtor"]), text: z.string() }))
+    .max(40),
+  collectorTrait: z.string(),
+  collectorName: z.string(),
+  debtorName: z.string(),
+});
+
+const ALLOWED_ICONS = [
+  "Mail","Coins","Handshake","Landmark","AlertTriangle","Gavel","ShieldAlert",
+  "Heart","Ear","HelpCircle","FileText","Wallet","Clock","CreditCard",
+  "Calculator","AlertOctagon","Timer","Scale","ThumbsUp","ListChecks",
+] as const;
+
+export const suggestDynamicCards = createServerFn({ method: "POST" })
+  .inputValidator((data) => DynamicCardsSchema.parse(data))
+  .handler(async ({ data }) => {
+    const apiKey = process.env.LOVABLE_API_KEY;
+    const fallback = {
+      cards: [
+        {
+          id: "dyn-listen",
+          title: "Spørg ind",
+          effect: "Stil et åbent spørgsmål",
+          cost: 0,
+          icon: "Ear",
+          prompt: "Fortæl mig lige lidt mere om hvordan din situation ser ud lige nu.",
+        },
+        {
+          id: "dyn-offer",
+          title: "Læg et tal",
+          effect: "Foreslå et konkret beløb",
+          cost: 1,
+          icon: "ListChecks",
+          prompt: "Hvad siger du til at vi finder et månedligt beløb der passer dig?",
+        },
+      ],
+    };
+    if (!apiKey) return fallback;
+
+    const transcriptText = data.transcript
+      .map((m) => `${m.role === "collector" ? data.collectorName : data.debtorName}: ${m.text}`)
+      .join("\n");
+
+    const sys = `You generate 2 NEW Danish action cards for a debt-collection training game. The cards must fit the COLLECTOR's personality (${data.collectorTrait}) and react to what just happened in the conversation. Each card is a concrete line the collector can say. Vary tone: one slightly more pressing, one slightly softer. Keep prompts 1-2 sentences in DANISH. Reply ONLY with valid JSON: {"cards":[{"title":string (max 3 words, Danish),"effect":string (max 6 words, Danish),"cost":number (0-3),"icon":one of ${ALLOWED_ICONS.join("|")},"prompt":string (Danish, 1-2 sentences)}]}. Exactly 2 cards.`;
+
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: sys },
+          { role: "user", content: `Samtale indtil nu:\n${transcriptText}\n\nLav 2 nye kort.` },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+    if (!res.ok) return fallback;
+    const json: any = await res.json();
+    const raw = json?.choices?.[0]?.message?.content ?? "{}";
+    try {
+      const parsed = JSON.parse(raw);
+      const arr = Array.isArray(parsed?.cards) ? parsed.cards.slice(0, 2) : [];
+      const cards = arr.map((c: any, i: number) => ({
+        id: `dyn-${Date.now()}-${i}`,
+        title: String(c.title ?? "Replik").slice(0, 24),
+        effect: String(c.effect ?? "Tilpasset replik").slice(0, 40),
+        cost: Math.max(0, Math.min(3, Number(c.cost) || 0)),
+        icon: (ALLOWED_ICONS as readonly string[]).includes(String(c.icon)) ? String(c.icon) : "Sparkles",
+        prompt: String(c.prompt ?? "..."),
+      }));
+      if (cards.length < 2) return fallback;
+      return { cards };
+    } catch {
+      return fallback;
+    }
+  });
