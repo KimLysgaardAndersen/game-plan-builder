@@ -292,6 +292,43 @@ export const LEVELS: Level[] = [
       { id: "min", label: "Mindst 400 kr/måned", kind: "min_monthly", target: 400, bonus: true },
     ],
   },
+  {
+    id: "lvl-6-secret-rasmus",
+    number: 6,
+    title: "🔒 Hemmelig bane: Den frække",
+    brief:
+      "Rasmus, 31, byggemester. Skylder 9.500 kr på værktøj. Han er charmerende, fræk og kan IKKE lade være med at lave dobbelttydige bemærkninger og 'thats what she said'-vittigheder. Få ham til at fokusere længe nok til at indgå en aftale.",
+    difficulty: "Ekspert",
+    maxRounds: 8,
+    pressureCap: 7,
+    debtor: {
+      id: "rude-rasmus",
+      name: "Rasmus",
+      age: 31,
+      title: "Den frække charmør",
+      description: "Charmerende, flirtende, evig 'thats what she said'-vittighedsmager.",
+      image: debtorRude,
+      amount: 9500,
+      caseId: "X-69420",
+      initialLine:
+        "Nååh, en inkasso-dame der ringer mig op midt på dagen? Det plejer at koste ekstra... men sig frem, hvad har du på hjerte?",
+      systemPrompt: `You are Rasmus, 31, Danish construction foreman, charming and cheeky. You owe 9.500 DKK for tools. You are NOT explicit or vulgar — you are PG-13 cheeky: constant double entendres, 'thats what she said'-style jokes (in Danish: 'det sagde hun også i går', 'sådan sagde hun også', 'det var også hvad hun sagde'), playful flirting, mild innuendo. You twist almost every neutral phrase the collector says ("hård", "lang", "stor", "stiv", "kom ind", "tag den", "betal", "indgå", "afdrag") into a cheeky comeback. You CAN realistically pay 1500-2000 DKK/month and will eventually agree IF the collector stays professional and steers you back on track. If the collector flirts back or gets flustered, you derail further. If they are firm-but-friendly and ignore your jokes, you slowly comply. Always reply in DANISH, 1-3 short sentences, witty and cheeky but never sexually explicit, never crude anatomical words, never anything inappropriate for daytime TV.`,
+      temperament: {
+        label: "Fræk charmør",
+        mood: "Flirtende, evigt dobbelttydig",
+        hangupRisk: "lav",
+        patience: 5,
+        triggers: ["Kedsomhed", "Hvis nogen flirter tilbage og mister kontrollen"],
+        tone: "gold",
+        cue: "TEMPERAMENT: You almost never hang up — you're enjoying yourself too much. Add a cheeky 'thats what she said'-style remark in roughly every other reply. Stay PG-13. If collector ignores jokes and stays professional 3 rounds in a row, settle down and agree to a real plan.",
+      },
+    },
+    objectives: [
+      { id: "agree", label: "Få Rasmus til at fokusere og indgå en aftale", kind: "agreement" },
+      { id: "min", label: "Mindst 1.500 kr/måned", kind: "min_monthly", target: 1500, bonus: true },
+      { id: "fast", label: "Afslut på højst 6 runder", kind: "max_rounds", target: 6, bonus: true },
+    ],
+  },
 ];
 
 // Backwards-compatible export
