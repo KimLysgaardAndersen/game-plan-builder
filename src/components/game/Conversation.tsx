@@ -327,6 +327,56 @@ export function Conversation({
             })}
           </div>
 
+          {/* Adaptive AI-generated cards */}
+          <div className="mt-4">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="font-display text-[11px] uppercase tracking-widest text-[color:var(--gold)]">
+                Tilpassede kort
+              </p>
+              <span className="text-[10px] text-muted-foreground">
+                {dynLoading ? "opdaterer…" : "live"}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {[0, 1].map((slot) => {
+                const card = dynamicCards[slot];
+                if (!card) {
+                  return (
+                    <div
+                      key={slot}
+                      className="flex h-[112px] items-center justify-center rounded-xl border border-dashed border-[color:var(--gold)]/30 p-3 text-[10px] text-muted-foreground"
+                    >
+                      {dynLoading ? "Genererer…" : "Tomt slot"}
+                    </div>
+                  );
+                }
+                const used = usedCards.includes(card.id);
+                return (
+                  <button
+                    key={card.id}
+                    onClick={() => playCard(card)}
+                    disabled={busy || used}
+                    className="group rounded-xl border border-[color:var(--gold)]/40 p-3 text-left transition-all hover:border-[color:var(--gold)] hover:shadow-[0_0_20px_-4px_var(--gold)] disabled:opacity-30"
+                    style={{ background: "var(--gradient-card)" }}
+                  >
+                    <div className="mb-2 flex items-center justify-between">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[color:var(--gold)]/15 text-[color:var(--gold)]">
+                        <CardIcon name={card.icon} className="h-4 w-4" />
+                      </div>
+                      <span className="text-[10px] font-semibold text-[color:var(--gold)]">
+                        −{card.cost}
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold leading-tight">{card.title}</p>
+                    <p className="mt-1 line-clamp-2 text-[10px] text-muted-foreground">
+                      {card.effect}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="mt-6 rounded-xl border border-[color:var(--gold)]/40 bg-[color:var(--gold)]/5 p-3">
             {(debtorOffer.monthly > 0 || debtorOffer.lump > 0) && (
               <div className="mb-3 rounded-lg border border-[color:var(--success)]/40 bg-[color:var(--success)]/10 p-2">
