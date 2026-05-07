@@ -30,7 +30,7 @@ export const replyAsDebtor = createServerFn({ method: "POST" })
       {
         role: "system",
         content:
-          'Reply ONLY with valid JSON: {"reply": string in Danish (1-3 sentences), "verdict": "continue" | "agreed" | "refused", "monthlyAmount": number (DKK/month the debtor JUST agreed to, 0 if not agreed or not a monthly plan), "lumpSum": number (DKK debtor agreed to pay in one go, 0 if none)}. Use "agreed" ONLY when you (the debtor) accept a concrete amount. Use "refused" if you angrily end the call.',
+          'Reply ONLY with valid JSON: {"reply": string in Danish (1-3 sentences), "verdict": "continue" | "agreed" | "refused", "monthlyAmount": number (DKK/month JUST agreed to), "lumpSum": number (DKK lump sum JUST agreed to)}. If the collector\'s LAST message contains a concrete offer (e.g. "FORSLAG: 800 kr/md" or "FORSLAG: 5000 kr engangsbeløb"), you MUST decide: accept it ("agreed" with the amounts filled in), counter it (verdict "continue", explain your counter), or refuse it (verdict "refused" only if you would end the call). Accept offers that fit your character\'s realistic ability to pay. Use "refused" only if you angrily hang up.',
       },
     ];
 
