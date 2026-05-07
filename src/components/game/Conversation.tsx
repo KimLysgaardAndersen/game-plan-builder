@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Target, Flag } from "lucide-react";
+import { ArrowLeft, Target, Flag, Handshake } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { CardIcon } from "./CardIcon";
 import { replyAsDebtor } from "@/lib/debtor.functions";
 import type { ActionCard, CollectorAvatar, Level } from "@/lib/game-data";
@@ -33,6 +34,9 @@ export function Conversation({
   const [busy, setBusy] = useState(false);
   const [usedCards, setUsedCards] = useState<string[]>([]);
   const [agreement, setAgreement] = useState({ monthly: 0, lump: 0 });
+  const [offerOpen, setOfferOpen] = useState(false);
+  const [offerType, setOfferType] = useState<"monthly" | "lump">("monthly");
+  const [offerAmount, setOfferAmount] = useState<string>("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -66,11 +70,13 @@ export function Conversation({
     if (busy) return;
     setBusy(true);
     const collectorLine = card.prompt;
+    await sendCollectorLine(collectorLine, [...usedCards, card.id], pressure + card.cost);
+  }
+
+  async function sendCollectorLine(collectorLine: string, newUsed: string[], newPressure: number) {
     const newMessages: ChatMsg[] = [...messages, { role: "collector", text: collectorLine }];
     setMessages(newMessages);
-    const newUsed = [...usedCards, card.id];
     setUsedCards(newUsed);
-    const newPressure = pressure + card.cost;
     setPressure(newPressure);
 
     const aiMessages = newMessages.map((m) => ({
@@ -113,6 +119,19 @@ export function Conversation({
     } finally {
       setBusy(false);
     }
+  }
+
+  async function submitOffer() {
+    const amt = Number(offerAmount.replace(/\D/g, ""));
+    if (!amt || busy) return;
+    const text =
+      offerType === "monthly"
+        ? `FORSLAG: ${amt.toLocaleString("da-DK")} kr/md i en afdragsordning. Kan du acceptere det?`
+        : `FORSLAG: ${amt.toLocaleString("da-DK")} kr som engangsbeløb inden for 14 dage. Kan du acceptere det?`;
+    setOfferOpen(false);
+    setOfferAmount("");
+    setBusy(true);
+    await sendCollectorLine(text, usedCards, pressure);
   }
 
   return (
@@ -245,6 +264,53 @@ export function Conversation({
             })}
           </div>
 
+          <div className="mt-6 rounded-xl border border-[color:var(--gold)]/40 bg-[color:var(--gold)]/5 p-3">
+            <p className="font-display text-xs uppercase tracking-widest text-[color:var(--gold)]">
+              Foreslå konkret aftale
+            </p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Læg et tal på bordet. Debitor kan acceptere, modforhandle eller afvise.
+            </p>
+            {!offerOpen ? (
+              <Button size="sm" onClick={() => setOfferOpen(true)} disabled={busy} className="mt-2 w-full">
+                <Handshake className="mr-2 h-4 w-4" /> Lav et tilbud
+              </Button>
+            ) : (
+              <div className="mt-2 space-y-2">
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setOfferType("monthly")}
+                    className={`flex-1 rounded-md border px-2 py-1 text-[11px] ${offerType === "monthly" ? "border-[color:var(--gold)] bg-[color:var(--gold)]/10" : "border-border"}`}
+                  >
+                    kr/md
+                  </button>
+                  <button
+                    onClick={() => setOfferType("lump")}
+                    className={`flex-1 rounded-md border px-2 py-1 text-[11px] ${offerType === "lump" ? "border-[color:var(--gold)] bg-[color:var(--gold)]/10" : "border-border"}`}
+                  >
+                    Engangsbeløb
+                  </button>
+                </div>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="Beløb i DKK"
+                  value={offerAmount}
+                  onChange={(e) => setOfferAmount(e.target.value)}
+                  className="h-9"
+                />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={submitOffer} disabled={busy || !offerAmount} className="flex-1">
+                    Send forslag
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setOfferOpen(false)}>
+                    Annullér
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
           <Button
             size="sm"
             onClick={() => {
@@ -252,7 +318,7 @@ export function Conversation({
               finishWith(hasDeal ? "agreed" : "timeout", agreement.monthly, agreement.lump, usedCards, pressure);
             }}
             disabled={busy}
-            className="mt-6 w-full"
+            className="mt-3 w-full"
           >
             <Flag className="mr-2 h-4 w-4" />
             {agreement.monthly > 0 || agreement.lump > 0 ? "Afslut & bekræft aftale" : "Afslut sagen"}
