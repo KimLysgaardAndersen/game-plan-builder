@@ -537,7 +537,13 @@ function Bubble({
   return (
     <div className={`flex items-end gap-3 ${isCollector ? "justify-end" : "justify-start"}`}>
       {!isCollector && (
-        <img src={debtorImage} alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover" />
+        <img
+          src={debtorImage}
+          alt=""
+          width={56}
+          height={56}
+          className="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-[color:var(--debtor)] shadow-md"
+        />
       )}
       <div
         className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
@@ -552,7 +558,13 @@ function Bubble({
         {msg.text}
       </div>
       {isCollector && (
-        <img src={collector.image} alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover" />
+        <img
+          src={collector.image}
+          alt=""
+          width={56}
+          height={56}
+          className="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-[color:var(--creditor)] shadow-md"
+        />
       )}
     </div>
   );
