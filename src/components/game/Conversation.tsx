@@ -269,6 +269,28 @@ export function Conversation({
           </div>
 
           <div className="mt-6 rounded-xl border border-[color:var(--gold)]/40 bg-[color:var(--gold)]/5 p-3">
+            {(debtorOffer.monthly > 0 || debtorOffer.lump > 0) && (
+              <div className="mb-3 rounded-lg border border-[color:var(--success)]/40 bg-[color:var(--success)]/10 p-2">
+                <p className="text-[11px] uppercase tracking-widest text-[color:var(--success)]">
+                  {debtor.name} foreslår
+                </p>
+                <p className="mt-0.5 font-display text-base">
+                  {debtorOffer.monthly > 0
+                    ? `${debtorOffer.monthly.toLocaleString("da-DK")} kr/md`
+                    : `${debtorOffer.lump.toLocaleString("da-DK")} kr engangs`}
+                </p>
+                <Button
+                  size="sm"
+                  disabled={busy}
+                  onClick={() =>
+                    finishWith("agreed", debtorOffer.monthly, debtorOffer.lump, usedCards, pressure)
+                  }
+                  className="mt-2 w-full"
+                >
+                  <Check className="mr-2 h-4 w-4" /> Godkend forslag
+                </Button>
+              </div>
+            )}
             <p className="font-display text-xs uppercase tracking-widest text-[color:var(--gold)]">
               Foreslå konkret aftale
             </p>
