@@ -65,6 +65,21 @@ export interface DebtorProfile {
   caseId: string;
   systemPrompt: string;
   initialLine: string;
+  temperament: DebtorTemperament;
+}
+
+export type HangupRisk = "lav" | "middel" | "høj" | "meget høj";
+
+export interface DebtorTemperament {
+  label: string;            // short personality label, e.g. "Tålmodig"
+  mood: string;              // one-line mood description
+  hangupRisk: HangupRisk;    // how easily they hang up
+  patience: number;          // 1-5, higher = tolerates more pressure
+  triggers: string[];        // short list of things that set them off
+  /** AI cue appended to systemPrompt at runtime. */
+  cue: string;
+  /** Tailwind/CSS color token name to color the badge. */
+  tone: "success" | "gold" | "secondary" | "creditor" | "destructive";
 }
 
 // ============= Levels =============
