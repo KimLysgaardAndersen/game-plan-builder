@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@import url("https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap");
 
 @custom-variant dark (&:is(.dark *));
 
@@ -59,6 +60,12 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-debtor: var(--debtor);
+  --color-creditor: var(--creditor);
+  --color-gold: var(--gold);
+  --color-success: var(--success);
+  --font-display: "Oswald", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
 }
 
 :root {
