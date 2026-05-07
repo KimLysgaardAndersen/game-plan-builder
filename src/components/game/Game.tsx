@@ -37,6 +37,7 @@ export function Game() {
   const [result, setResult] = useState<ResultData | null>(null);
   const [highestUnlocked, setHighestUnlocked] = useState(1);
   const [starsByLevel, setStarsByLevel] = useState<Record<string, number>>({});
+  const [attempt, setAttempt] = useState(0);
 
   const currentIdx = LEVELS.findIndex((l) => l.id === level.id);
   const nextLevel = LEVELS[currentIdx + 1];
@@ -82,6 +83,7 @@ export function Game() {
       )}
       {step === "conversation" && (
         <Conversation
+          key={`${level.id}-${attempt}`}
           collector={collector}
           level={level}
           deck={deck}
@@ -100,10 +102,14 @@ export function Game() {
         <Result
           result={result}
           hasNext={!!nextLevel}
-          onReplay={() => setStep("conversation")}
+          onReplay={() => {
+            setAttempt((a) => a + 1);
+            setStep("conversation");
+          }}
           onNextLevel={() => {
             if (nextLevel) {
               setLevel(nextLevel);
+              setAttempt((a) => a + 1);
               setStep("briefing");
             }
           }}
