@@ -27,6 +27,7 @@ export interface ResultData {
   ctx: PlayContext;
   evaluations: { id: string; label: string; bonus: boolean; passed: boolean }[];
   transcript: ChatMsg[];
+  hangup?: boolean;
 }
 
 export function Game() {
