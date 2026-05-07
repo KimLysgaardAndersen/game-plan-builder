@@ -32,7 +32,7 @@ export const replyAsDebtor = createServerFn({ method: "POST" })
       {
         role: "system",
         content:
-          'Reply ONLY with valid JSON: {"reply": string in Danish (1-3 sentences), "verdict": "continue" | "agreed" | "refused", "monthlyAmount": number, "lumpSum": number, "proposedMonthly": number, "proposedLump": number}. RULES: (1) If you ACCEPT, set verdict="agreed" and put the agreed amount in monthlyAmount/lumpSum. (2) If YOU (the debtor) propose or counter with a concrete number, set verdict="continue" and put your proposal in proposedMonthly/proposedLump (so the collector can accept it). (3) Use "refused" only if you angrily hang up. (4) If the collector\'s last message starts with "FORSLAG:", you MUST accept, counter, or refuse — not stall. Accept offers that fit your character\'s realistic ability to pay. Set unused fields to 0.',
+          'Reply ONLY with valid JSON: {"reply": string in Danish (1-3 sentences), "verdict": "continue" | "agreed" | "refused" | "hangup", "monthlyAmount": number, "lumpSum": number, "proposedMonthly": number, "proposedLump": number}. RULES: (1) If you ACCEPT an offer, set verdict="agreed" and put the agreed amount in monthlyAmount/lumpSum. (2) If YOU (the debtor) propose or counter with a concrete number, set verdict="continue" and put your proposal in proposedMonthly/proposedLump. (3) Use "refused" only if you calmly but firmly say no to a final offer. (4) Use "hangup" if the collector is rude, threatening, condescending, presses too hard, or repeatedly ignores your situation — your reply should be a short angry line and then *lægger på* / *afbryder samtalen*. Pressure-cards like inkasso/foged/gebyr/RKI used too aggressively or stacked early MUST trigger hangup if your character is anxious, elderly, or vulnerable. (5) If the collector\'s last message starts with "FORSLAG:", you MUST accept, counter, or refuse — not stall. (6) Stay in character: an angry debtor hangs up faster; an arrogant one mocks before hanging up; an elderly one panics. Set unused fields to 0.',
       },
     ];
 
@@ -59,10 +59,12 @@ export const replyAsDebtor = createServerFn({ method: "POST" })
     try {
       const parsed = JSON.parse(raw);
       const verdict =
-        parsed.verdict === "agreed" || parsed.verdict === "refused" ? parsed.verdict : "continue";
+        parsed.verdict === "agreed" || parsed.verdict === "refused" || parsed.verdict === "hangup"
+          ? parsed.verdict
+          : "continue";
       return {
         reply: String(parsed.reply ?? ""),
-        verdict: verdict as "continue" | "agreed" | "refused",
+        verdict: verdict as "continue" | "agreed" | "refused" | "hangup",
         monthlyAmount: Number(parsed.monthlyAmount) || 0,
         lumpSum: Number(parsed.lumpSum) || 0,
         proposedMonthly: Number(parsed.proposedMonthly) || 0,

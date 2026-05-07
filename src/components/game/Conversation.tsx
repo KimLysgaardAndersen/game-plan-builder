@@ -44,7 +44,7 @@ export function Conversation({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
 
-  function finishWith(verdict: "agreed" | "refused" | "timeout", monthly: number, lump: number, finalUsed: string[], finalPressure: number) {
+  function finishWith(verdict: "agreed" | "refused" | "timeout" | "hangup", monthly: number, lump: number, finalUsed: string[], finalPressure: number) {
     const ctx: PlayContext = {
       agreed: verdict === "agreed",
       monthlyAmount: monthly,
@@ -55,15 +55,19 @@ export function Conversation({
       collectorId: collector.id,
     };
     const evald = evaluateLevel(level, ctx);
+    // Forced loss: a hangup always means failure regardless of objectives
+    const outcome = verdict === "hangup" ? ("lose" as const) : evald.outcome;
+    const stars = verdict === "hangup" ? 0 : evald.stars;
     onFinish({
-      outcome: evald.outcome,
-      stars: evald.stars,
+      outcome,
+      stars,
       rounds: round,
       collectorName: collector.name,
       level,
       ctx,
       evaluations: evald.results.map((r) => ({ id: r.objective.id, label: r.objective.label, bonus: !!r.objective.bonus, passed: r.passed })),
       transcript: messages,
+      hangup: verdict === "hangup",
     });
   }
 
@@ -104,9 +108,29 @@ export function Conversation({
         finishWith("agreed", newAgreement.monthly, newAgreement.lump, newUsed, newPressure);
         return;
       }
+      if (verdict === "hangup") {
+        setMessages((m) => [
+          ...m,
+          { role: "debtor", text: "*lægger på*" },
+        ]);
+        setBusy(false);
+        finishWith("hangup", 0, 0, newUsed, newPressure);
+        return;
+      }
       if (verdict === "refused") {
         setBusy(false);
         finishWith("refused", newAgreement.monthly, newAgreement.lump, newUsed, newPressure);
+        return;
+      }
+
+      // Hard pressure ceiling — instant hangup if collector goes way over the cap
+      if (newPressure > level.pressureCap * 1.5) {
+        setMessages((m) => [
+          ...m,
+          { role: "debtor", text: "Det her er nok! Jeg gider ikke høre mere — farvel! *lægger på*" },
+        ]);
+        setBusy(false);
+        finishWith("hangup", 0, 0, newUsed, newPressure);
         return;
       }
 
