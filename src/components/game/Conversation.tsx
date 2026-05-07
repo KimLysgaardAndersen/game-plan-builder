@@ -220,6 +220,9 @@ export function Conversation({
               <p className="text-xs text-muted-foreground">
                 Bane {level.number} · Sag #{debtor.caseId} · {debtor.amount.toLocaleString("da-DK")} kr
               </p>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                <TemperamentBadge debtor={debtor} />
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-4 text-xs">
