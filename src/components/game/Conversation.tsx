@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Target, Flag, Handshake, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { CardIcon } from "./CardIcon";
+import { TemperamentBadge } from "./TemperamentBadge";
 import { replyAsDebtor, suggestDynamicCards } from "@/lib/debtor.functions";
 import type { ActionCard, CollectorAvatar, Level } from "@/lib/game-data";
 import { evaluateLevel, type PlayContext } from "@/lib/scoring";
