@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Target, Flag, Handshake, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { CardIcon } from "./CardIcon";
-import { replyAsDebtor } from "@/lib/debtor.functions";
+import { replyAsDebtor, suggestDynamicCards } from "@/lib/debtor.functions";
 import type { ActionCard, CollectorAvatar, Level } from "@/lib/game-data";
 import { evaluateLevel, type PlayContext } from "@/lib/scoring";
 import type { ResultData } from "./Game";
@@ -26,6 +26,7 @@ export function Conversation({
 }) {
   const debtor = level.debtor;
   const replyFn = useServerFn(replyAsDebtor);
+  const dynamicFn = useServerFn(suggestDynamicCards);
   const [messages, setMessages] = useState<ChatMsg[]>([
     { role: "debtor", text: debtor.initialLine },
   ]);
@@ -38,11 +39,41 @@ export function Conversation({
   const [offerOpen, setOfferOpen] = useState(false);
   const [offerType, setOfferType] = useState<"monthly" | "lump">("monthly");
   const [offerAmount, setOfferAmount] = useState<string>("");
+  const [dynamicCards, setDynamicCards] = useState<ActionCard[]>([]);
+  const [dynLoading, setDynLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
+
+  // Refresh adaptive cards whenever the debtor has spoken
+  useEffect(() => {
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== "debtor") return;
+    let cancelled = false;
+    setDynLoading(true);
+    dynamicFn({
+      data: {
+        transcript: messages.slice(-8),
+        collectorTrait: collector.systemTrait,
+        collectorName: collector.name,
+        debtorName: debtor.name,
+      },
+    })
+      .then((res) => {
+        if (cancelled) return;
+        setDynamicCards((res?.cards as ActionCard[]) ?? []);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setDynLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages.length]);
 
   function finishWith(verdict: "agreed" | "refused" | "timeout" | "hangup", monthly: number, lump: number, finalUsed: string[], finalPressure: number) {
     const ctx: PlayContext = {
@@ -75,6 +106,10 @@ export function Conversation({
     if (busy) return;
     setBusy(true);
     const collectorLine = card.prompt;
+    // Dynamic cards are one-shot: remove them from the slot when played
+    if (card.id.startsWith("dyn-")) {
+      setDynamicCards((d) => d.filter((c) => c.id !== card.id));
+    }
     await sendCollectorLine(collectorLine, [...usedCards, card.id], pressure + card.cost);
   }
 
