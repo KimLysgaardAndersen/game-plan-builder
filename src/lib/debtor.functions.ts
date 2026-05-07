@@ -30,7 +30,7 @@ export const replyAsDebtor = createServerFn({ method: "POST" })
       {
         role: "system",
         content:
-          'Reply ONLY with valid JSON: {"reply": string in Danish (1-3 sentences), "verdict": "continue" | "agreed" | "refused", "monthlyAmount": number (DKK/month JUST agreed to), "lumpSum": number (DKK lump sum JUST agreed to)}. If the collector\'s LAST message contains a concrete offer (e.g. "FORSLAG: 800 kr/md" or "FORSLAG: 5000 kr engangsbeløb"), you MUST decide: accept it ("agreed" with the amounts filled in), counter it (verdict "continue", explain your counter), or refuse it (verdict "refused" only if you would end the call). Accept offers that fit your character\'s realistic ability to pay. Use "refused" only if you angrily hang up.',
+          'Reply ONLY with valid JSON: {"reply": string in Danish (1-3 sentences), "verdict": "continue" | "agreed" | "refused", "monthlyAmount": number, "lumpSum": number, "proposedMonthly": number, "proposedLump": number}. RULES: (1) If you ACCEPT, set verdict="agreed" and put the agreed amount in monthlyAmount/lumpSum. (2) If YOU (the debtor) propose or counter with a concrete number, set verdict="continue" and put your proposal in proposedMonthly/proposedLump (so the collector can accept it). (3) Use "refused" only if you angrily hang up. (4) If the collector\'s last message starts with "FORSLAG:", you MUST accept, counter, or refuse — not stall. Accept offers that fit your character\'s realistic ability to pay. Set unused fields to 0.',
       },
     ];
 
@@ -63,9 +63,11 @@ export const replyAsDebtor = createServerFn({ method: "POST" })
         verdict: verdict as "continue" | "agreed" | "refused",
         monthlyAmount: Number(parsed.monthlyAmount) || 0,
         lumpSum: Number(parsed.lumpSum) || 0,
+        proposedMonthly: Number(parsed.proposedMonthly) || 0,
+        proposedLump: Number(parsed.proposedLump) || 0,
       };
     } catch {
-      return { reply: String(raw), verdict: "continue" as const, monthlyAmount: 0, lumpSum: 0 };
+      return { reply: String(raw), verdict: "continue" as const, monthlyAmount: 0, lumpSum: 0, proposedMonthly: 0, proposedLump: 0 };
     }
   });
 
