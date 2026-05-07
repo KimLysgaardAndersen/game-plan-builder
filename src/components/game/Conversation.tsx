@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Target, Flag, Handshake, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { CardIcon } from "./CardIcon";
-import { replyAsDebtor } from "@/lib/debtor.functions";
+import { replyAsDebtor, suggestDynamicCards } from "@/lib/debtor.functions";
 import type { ActionCard, CollectorAvatar, Level } from "@/lib/game-data";
 import { evaluateLevel, type PlayContext } from "@/lib/scoring";
 import type { ResultData } from "./Game";
@@ -26,6 +26,7 @@ export function Conversation({
 }) {
   const debtor = level.debtor;
   const replyFn = useServerFn(replyAsDebtor);
+  const dynamicFn = useServerFn(suggestDynamicCards);
   const [messages, setMessages] = useState<ChatMsg[]>([
     { role: "debtor", text: debtor.initialLine },
   ]);
@@ -38,11 +39,41 @@ export function Conversation({
   const [offerOpen, setOfferOpen] = useState(false);
   const [offerType, setOfferType] = useState<"monthly" | "lump">("monthly");
   const [offerAmount, setOfferAmount] = useState<string>("");
+  const [dynamicCards, setDynamicCards] = useState<ActionCard[]>([]);
+  const [dynLoading, setDynLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
+
+  // Refresh adaptive cards whenever the debtor has spoken
+  useEffect(() => {
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== "debtor") return;
+    let cancelled = false;
+    setDynLoading(true);
+    dynamicFn({
+      data: {
+        transcript: messages.slice(-8),
+        collectorTrait: collector.systemTrait,
+        collectorName: collector.name,
+        debtorName: debtor.name,
+      },
+    })
+      .then((res) => {
+        if (cancelled) return;
+        setDynamicCards((res?.cards as ActionCard[]) ?? []);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setDynLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages.length]);
 
   function finishWith(verdict: "agreed" | "refused" | "timeout" | "hangup", monthly: number, lump: number, finalUsed: string[], finalPressure: number) {
     const ctx: PlayContext = {
@@ -75,6 +106,10 @@ export function Conversation({
     if (busy) return;
     setBusy(true);
     const collectorLine = card.prompt;
+    // Dynamic cards are one-shot: remove them from the slot when played
+    if (card.id.startsWith("dyn-")) {
+      setDynamicCards((d) => d.filter((c) => c.id !== card.id));
+    }
     await sendCollectorLine(collectorLine, [...usedCards, card.id], pressure + card.cost);
   }
 
@@ -290,6 +325,56 @@ export function Conversation({
                 </button>
               );
             })}
+          </div>
+
+          {/* Adaptive AI-generated cards */}
+          <div className="mt-4">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="font-display text-[11px] uppercase tracking-widest text-[color:var(--gold)]">
+                Tilpassede kort
+              </p>
+              <span className="text-[10px] text-muted-foreground">
+                {dynLoading ? "opdaterer…" : "live"}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {[0, 1].map((slot) => {
+                const card = dynamicCards[slot];
+                if (!card) {
+                  return (
+                    <div
+                      key={slot}
+                      className="flex h-[112px] items-center justify-center rounded-xl border border-dashed border-[color:var(--gold)]/30 p-3 text-[10px] text-muted-foreground"
+                    >
+                      {dynLoading ? "Genererer…" : "Tomt slot"}
+                    </div>
+                  );
+                }
+                const used = usedCards.includes(card.id);
+                return (
+                  <button
+                    key={card.id}
+                    onClick={() => playCard(card)}
+                    disabled={busy || used}
+                    className="group rounded-xl border border-[color:var(--gold)]/40 p-3 text-left transition-all hover:border-[color:var(--gold)] hover:shadow-[0_0_20px_-4px_var(--gold)] disabled:opacity-30"
+                    style={{ background: "var(--gradient-card)" }}
+                  >
+                    <div className="mb-2 flex items-center justify-between">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[color:var(--gold)]/15 text-[color:var(--gold)]">
+                        <CardIcon name={card.icon} className="h-4 w-4" />
+                      </div>
+                      <span className="text-[10px] font-semibold text-[color:var(--gold)]">
+                        −{card.cost}
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold leading-tight">{card.title}</p>
+                    <p className="mt-1 line-clamp-2 text-[10px] text-muted-foreground">
+                      {card.effect}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="mt-6 rounded-xl border border-[color:var(--gold)]/40 bg-[color:var(--gold)]/5 p-3">
