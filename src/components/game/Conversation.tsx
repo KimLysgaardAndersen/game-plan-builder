@@ -43,6 +43,7 @@ export function Conversation({
   const [dynamicCards, setDynamicCards] = useState<ActionCard[]>([]);
   const [dynLoading, setDynLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const lastDebtorLine = [...messages].reverse().find((m) => m.role === "debtor")?.text ?? debtor.initialLine;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -204,31 +205,57 @@ export function Conversation({
         className="flex min-h-[70vh] flex-col rounded-2xl border border-border"
         style={{ background: "var(--gradient-card)" }}
       >
-        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border p-4">
-          <div className="flex items-center gap-3">
-            <img
-              src={debtor.image}
-              alt={debtor.name}
-              width={48}
-              height={48}
-              loading="lazy"
-              className="h-12 w-12 rounded-full object-cover ring-2 ring-[color:var(--debtor)]"
-            />
-            <div>
-              <p className="font-display text-lg leading-tight">
-                {debtor.name}, {debtor.age}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Bane {level.number} · Sag #{debtor.caseId} · {debtor.amount.toLocaleString("da-DK")} kr
-              </p>
-              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+        {/* Debtor stage — large, present portrait */}
+        <header className="relative overflow-hidden border-b border-border">
+          <div className="grid grid-cols-[180px_1fr] gap-5 p-5 sm:grid-cols-[220px_1fr] sm:p-6">
+            <div className="relative">
+              <img
+                src={debtor.image}
+                alt={debtor.name}
+                width={220}
+                height={220}
+                loading="lazy"
+                className="aspect-square w-full rounded-2xl object-cover shadow-[var(--shadow-elegant)] ring-2 ring-[color:var(--debtor)]"
+              />
+              {busy && (
+                <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full border border-[color:var(--debtor)]/40 bg-background px-2 py-0.5 text-[10px] text-[color:var(--debtor)] shadow">
+                  taler…
+                </span>
+              )}
+            </div>
+            <div className="flex min-w-0 flex-col">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Bane {level.number} · Sag #{debtor.caseId}
+                  </p>
+                  <h2 className="font-display text-2xl leading-tight sm:text-3xl">
+                    {debtor.name}, {debtor.age}
+                  </h2>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    Skylder{" "}
+                    <span className="font-semibold text-[color:var(--gold)]">
+                      {debtor.amount.toLocaleString("da-DK")} kr
+                    </span>
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 text-xs">
+                  <Stat label="Runde" value={`${round}/${level.maxRounds}`} />
+                  <Stat label="Pres" value={`${pressure}/${level.pressureCap}`} accent={pressure > level.pressureCap} />
+                </div>
+              </div>
+              <div className="mt-2">
                 <TemperamentBadge debtor={debtor} />
               </div>
+              <blockquote
+                className="mt-3 rounded-xl border-l-4 border-[color:var(--debtor)] bg-background/60 px-4 py-3 text-sm italic leading-relaxed"
+                aria-label="Seneste replik fra debitor"
+              >
+                <span className="mr-1 text-[color:var(--debtor)]">“</span>
+                {lastDebtorLine}
+                <span className="ml-1 text-[color:var(--debtor)]">”</span>
+              </blockquote>
             </div>
-          </div>
-          <div className="flex items-center gap-4 text-xs">
-            <Stat label="Runde" value={`${round}/${level.maxRounds}`} />
-            <Stat label="Pres" value={`${pressure}/${level.pressureCap}`} accent={pressure > level.pressureCap} />
           </div>
         </header>
 
