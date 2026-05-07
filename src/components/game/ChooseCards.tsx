@@ -8,7 +8,7 @@ import {
 import { ArrowLeft, Play, Check } from "lucide-react";
 import { CardIcon } from "./CardIcon";
 
-const MAX_DECK = 6;
+const MAX_DECK = 8;
 
 export function ChooseCards({
   collector,
