@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Target, Flag } from "lucide-react";
+import { ArrowLeft, Target, Flag, Handshake } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { CardIcon } from "./CardIcon";
 import { replyAsDebtor } from "@/lib/debtor.functions";
 import type { ActionCard, CollectorAvatar, Level } from "@/lib/game-data";
@@ -33,6 +34,9 @@ export function Conversation({
   const [busy, setBusy] = useState(false);
   const [usedCards, setUsedCards] = useState<string[]>([]);
   const [agreement, setAgreement] = useState({ monthly: 0, lump: 0 });
+  const [offerOpen, setOfferOpen] = useState(false);
+  const [offerType, setOfferType] = useState<"monthly" | "lump">("monthly");
+  const [offerAmount, setOfferAmount] = useState<string>("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -66,11 +70,13 @@ export function Conversation({
     if (busy) return;
     setBusy(true);
     const collectorLine = card.prompt;
+    await sendCollectorLine(collectorLine, [...usedCards, card.id], pressure + card.cost);
+  }
+
+  async function sendCollectorLine(collectorLine: string, newUsed: string[], newPressure: number) {
     const newMessages: ChatMsg[] = [...messages, { role: "collector", text: collectorLine }];
     setMessages(newMessages);
-    const newUsed = [...usedCards, card.id];
     setUsedCards(newUsed);
-    const newPressure = pressure + card.cost;
     setPressure(newPressure);
 
     const aiMessages = newMessages.map((m) => ({
@@ -113,6 +119,19 @@ export function Conversation({
     } finally {
       setBusy(false);
     }
+  }
+
+  async function submitOffer() {
+    const amt = Number(offerAmount.replace(/\D/g, ""));
+    if (!amt || busy) return;
+    const text =
+      offerType === "monthly"
+        ? `FORSLAG: ${amt.toLocaleString("da-DK")} kr/md i en afdragsordning. Kan du acceptere det?`
+        : `FORSLAG: ${amt.toLocaleString("da-DK")} kr som engangsbeløb inden for 14 dage. Kan du acceptere det?`;
+    setOfferOpen(false);
+    setOfferAmount("");
+    setBusy(true);
+    await sendCollectorLine(text, usedCards, pressure);
   }
 
   return (
