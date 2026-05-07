@@ -25,6 +25,10 @@ export function Result({
   hasNext: boolean;
 }) {
   const c = TITLES[result.outcome];
+  const hangupTitle = result.hangup
+    ? { title: "Debitor lagde på!", sub: "Du pressede for hårdt — samtalen blev afbrudt.", tone: "var(--destructive)" }
+    : null;
+  const display = hangupTitle ?? c;
   const debriefFn = useServerFn(coachDebrief);
   const [feedback, setFeedback] = useState<string>("");
   const [loadingFb, setLoadingFb] = useState(true);
@@ -70,10 +74,10 @@ export function Result({
               />
             ))}
           </div>
-          <h2 className="mt-6 font-display text-4xl font-bold" style={{ color: c.tone }}>
-            {c.title}
+          <h2 className="mt-6 font-display text-4xl font-bold" style={{ color: display.tone }}>
+            {display.title}
           </h2>
-          <p className="mt-2 text-muted-foreground">{c.sub}</p>
+          <p className="mt-2 text-muted-foreground">{display.sub}</p>
         </div>
 
         <div className="mt-8 space-y-2">
