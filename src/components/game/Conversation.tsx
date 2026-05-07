@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Target } from "lucide-react";
+import { ArrowLeft, Target, Flag } from "lucide-react";
 import { CardIcon } from "./CardIcon";
 import { replyAsDebtor } from "@/lib/debtor.functions";
 import type { ActionCard, CollectorAvatar, Level } from "@/lib/game-data";
@@ -245,7 +245,19 @@ export function Conversation({
             })}
           </div>
 
-          <Button variant="ghost" size="sm" onClick={onBack} className="mt-6 w-full">
+          <Button
+            size="sm"
+            onClick={() => {
+              const hasDeal = agreement.monthly > 0 || agreement.lump > 0;
+              finishWith(hasDeal ? "agreed" : "timeout", agreement.monthly, agreement.lump, usedCards, pressure);
+            }}
+            disabled={busy}
+            className="mt-6 w-full"
+          >
+            <Flag className="mr-2 h-4 w-4" />
+            {agreement.monthly > 0 || agreement.lump > 0 ? "Afslut & bekræft aftale" : "Afslut sagen"}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={onBack} className="mt-2 w-full">
             <ArrowLeft className="mr-2 h-4 w-4" /> Forlad samtalen
           </Button>
         </div>
