@@ -207,13 +207,13 @@ export function Conversation({
       >
         {/* Debtor stage — large, present portrait */}
         <header className="relative overflow-hidden border-b border-border">
-          <div className="grid grid-cols-[180px_1fr] gap-5 p-5 sm:grid-cols-[220px_1fr] sm:p-6">
+          <div className="grid grid-cols-[110px_1fr] gap-4 p-4 sm:grid-cols-[130px_1fr] sm:p-5">
             <div className="relative">
               <img
                 src={debtor.image}
                 alt={debtor.name}
-                width={220}
-                height={220}
+                width={130}
+                height={130}
                 loading="lazy"
                 className="aspect-square w-full rounded-2xl object-cover shadow-[var(--shadow-elegant)] ring-2 ring-[color:var(--debtor)]"
               />
@@ -229,7 +229,7 @@ export function Conversation({
                   <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
                     Bane {level.number} · Sag #{debtor.caseId}
                   </p>
-                  <h2 className="font-display text-2xl leading-tight sm:text-3xl">
+                  <h2 className="font-display text-xl leading-tight sm:text-2xl">
                     {debtor.name}, {debtor.age}
                   </h2>
                   <p className="mt-0.5 text-sm text-muted-foreground">
@@ -248,12 +248,10 @@ export function Conversation({
                 <TemperamentBadge debtor={debtor} />
               </div>
               <blockquote
-                className="mt-3 rounded-xl border-l-4 border-[color:var(--debtor)] bg-background/60 px-4 py-3 text-sm italic leading-relaxed"
+                className="mt-2 rounded-lg border-l-4 border-[color:var(--debtor)] bg-background/60 px-3 py-2 text-xs italic leading-snug line-clamp-2"
                 aria-label="Seneste replik fra debitor"
               >
-                <span className="mr-1 text-[color:var(--debtor)]">“</span>
-                {lastDebtorLine}
-                <span className="ml-1 text-[color:var(--debtor)]">”</span>
+                “{lastDebtorLine}”
               </blockquote>
             </div>
           </div>
@@ -539,7 +537,13 @@ function Bubble({
   return (
     <div className={`flex items-end gap-3 ${isCollector ? "justify-end" : "justify-start"}`}>
       {!isCollector && (
-        <img src={debtorImage} alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover" />
+        <img
+          src={debtorImage}
+          alt=""
+          width={56}
+          height={56}
+          className="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-[color:var(--debtor)] shadow-md"
+        />
       )}
       <div
         className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
@@ -554,7 +558,13 @@ function Bubble({
         {msg.text}
       </div>
       {isCollector && (
-        <img src={collector.image} alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover" />
+        <img
+          src={collector.image}
+          alt=""
+          width={56}
+          height={56}
+          className="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-[color:var(--creditor)] shadow-md"
+        />
       )}
     </div>
   );
