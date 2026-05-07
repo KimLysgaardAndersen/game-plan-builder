@@ -7,6 +7,7 @@ import debtorSingleMother from "@/assets/debtor-singlemother.jpg";
 import debtorArrogant from "@/assets/debtor-arrogant.jpg";
 import debtorElderly from "@/assets/debtor-elderly.jpg";
 import debtorAngry from "@/assets/debtor-angry.jpg";
+import debtorRude from "@/assets/debtor-rude.jpg";
 
 export type CollectorId = "pragmatic" | "empathic" | "tough" | "friendly";
 
