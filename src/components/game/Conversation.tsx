@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Target, Flag, Handshake, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { CardIcon } from "./CardIcon";
+import { TemperamentBadge } from "./TemperamentBadge";
 import { replyAsDebtor, suggestDynamicCards } from "@/lib/debtor.functions";
 import type { ActionCard, CollectorAvatar, Level } from "@/lib/game-data";
 import { evaluateLevel, type PlayContext } from "@/lib/scoring";
@@ -123,7 +124,7 @@ export function Conversation({
       role: m.role === "collector" ? ("user" as const) : ("assistant" as const),
       content: m.text,
     }));
-    const systemPrompt = `${debtor.systemPrompt} The collector has this style: ${collector.systemTrait}.`;
+    const systemPrompt = `${debtor.systemPrompt}\n\n${debtor.temperament.cue}\n\nThe collector has this style: ${collector.systemTrait}.`;
 
     try {
       const { reply, verdict, monthlyAmount, lumpSum, proposedMonthly, proposedLump } = await replyFn({ data: { systemPrompt, messages: aiMessages } });
@@ -220,6 +221,9 @@ export function Conversation({
               <p className="text-xs text-muted-foreground">
                 Bane {level.number} · Sag #{debtor.caseId} · {debtor.amount.toLocaleString("da-DK")} kr
               </p>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                <TemperamentBadge debtor={debtor} />
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-4 text-xs">
