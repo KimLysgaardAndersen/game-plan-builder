@@ -75,11 +75,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Debtor & Collector — Træningsspil for gældsrådgivere" },
       { name: "description", content: "Træn realistiske inddrivelsessamtaler. Vælg avatar, læg dine kort og forhandl med en AI-debitor." },
       { name: "author", content: "Collectia" },
-      { property: "og:title", content: "Debtor & Collector" },
-      { property: "og:description", content: "Et tur-baseret kortspil der træner empati, compliance og forhandling i gældsrådgivning." },
+      { property: "og:title", content: "Debtor & Collector — Træningsspil for gældsrådgivere" },
+      { property: "og:description", content: "Træn realistiske inddrivelsessamtaler. Vælg avatar, læg dine kort og forhandl med en AI-debitor." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Debtor & Collector — Træningsspil for gældsrådgivere" },
+      { name: "twitter:description", content: "Træn realistiske inddrivelsessamtaler. Vælg avatar, læg dine kort og forhandl med en AI-debitor." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/089cc256-000d-4d2c-8679-afd1f2739e7f/id-preview-ecd2959a--a5fd32ab-fd23-40f7-a125-f0f119af08b8.lovable.app-1778172639086.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/089cc256-000d-4d2c-8679-afd1f2739e7f/id-preview-ecd2959a--a5fd32ab-fd23-40f7-a125-f0f119af08b8.lovable.app-1778172639086.png" },
     ],
     links: [
       {
